@@ -53,7 +53,7 @@ validUUIDs = {} # This value is not meant to be modified... but could be in orde
 # Generate randomized text (including text position, size, and color):
 def getTextAndAtts():
 	length = randomTextLength
-	if (customText):
+	if customText:
 		length = len(customText)
 
 	sectorSize = int(width / length)
@@ -65,7 +65,7 @@ def getTextAndAtts():
 		charList = []
 
 		# select character:
-		if (customText):
+		if customText:
 			charList.append(customText[i])
 		else:
 			charList.append(choice(charset))
@@ -76,9 +76,9 @@ def getTextAndAtts():
 		charList.append(randint(minFontSize , maxFontSize))
 
 		# select a rough, random character position (and implement buffers where necessary):
-		if (i == 0):
+		if i == 0:
 			hPosition = randint(sectorBuffer , (sectorSize * (i + 1)))
-		elif (i == (length - 1)):
+		elif i == (length - 1):
 			hPosition = randint(((sectorSize * i) - sectorBuffer) , ((sectorSize * (i + 1)) - sectorBuffer))
 		else:
 			hPosition = randint((sectorSize * i) , (sectorSize * (i + 1)))
@@ -132,7 +132,7 @@ def generate(saveFullPath = ''):
 		d.arc([(startX , startY) , (randint(startX , width) , randint(startY , height))] , randint(0 , 359) , randint(0 , 359) , width = randint(1 , 4) , fill = choice([(nr , ng , nb) , (snr , sng , snb)]))
 
 	# Warp the image:
-	if (enableWarp):
+	if enableWarp:
 		widthLimit = int(width * (warpLimitPercentage / 100))
 		heightLimit = int(height * (warpLimitPercentage / 100))
 
@@ -151,20 +151,20 @@ def generate(saveFullPath = ''):
 		captcha = captcha.transform((width , height) , Image.QUAD , data = (nwX , nwY , swX , swY , seX , seY , neX , neY) , fillcolor = (r , g , b))
 
 	# Remove case sensitivity, if necessary:
-	if (not(caseSensitivity)):
+	if not caseSensitivity:
 		captchaText = captchaText.lower()
 
 	# Encrypt the text, if necessary:
 	encryptedText = b''
-	if (encryptText):
+	if encryptText:
 		from cryptography.fernet import Fernet
 
-		if (not(encryptionKey)):
+		if not encryptionKey:
 			encryptionKey = Fernet.generate_key()
 
 		f = Fernet(encryptionKey)
 
-		if (replayAttackProtection):
+		if replayAttackProtection:
 			uuid = str(uuid4())
 			validUUIDs[uuid] = time()
 			encryptedText = f.encrypt((uuid + captchaText).encode())
@@ -173,7 +173,7 @@ def generate(saveFullPath = ''):
 
 	# Save the CAPTCHA:
 	base64EncodedFile = b''
-	if (saveFullPath):
+	if saveFullPath:
 		captcha.save(saveFullPath , imageFormat)
 	else:
 		ioObj = BytesIO()
@@ -186,32 +186,32 @@ def generate(saveFullPath = ''):
 # Verify user response (when encryption is enabled):
 def verify(userInput , encryptedText):
 	global validUUIDs
-	if (encryptText):
-		if (encryptionKey):
+	if encryptText:
+		if encryptionKey:
 			from cryptography.fernet import Fernet
 
 			f = Fernet(encryptionKey)
 
 			correctText = f.decrypt(encryptedText).decode()
 
-			if (replayAttackProtection):
+			if replayAttackProtection:
 				# Clean up expired UUIDs:
 				currentTime = time()
 				for uuid in validUUIDs:
-					if ((validUUIDs[uuid] + captchaTimeout) < currentTime):
+					if (validUUIDs[uuid] + captchaTimeout) < currentTime:
 						validUUIDs.pop(uuid)
 
 				# Validate UUID:
-				if (correctText[0:36] in validUUIDs):
+				if correctText[0:36] in validUUIDs:
 					validUUIDs.pop(correctText[0:36])
 					correctText = correctText[36:]
 				else:
 					return False
 
-			if (not(caseSensitivity)):
+			if not caseSensitivity:
 				userInput = userInput.lower()
 
-			if (userInput == correctText):
+			if userInput == correctText:
 				return True
 
 			return False
